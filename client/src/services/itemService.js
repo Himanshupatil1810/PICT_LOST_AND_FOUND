@@ -243,7 +243,7 @@ const claimItem = async (id, claimData) => {
     const errorMessage = error.response?.data?.message || 
                         error.message || 
                         'Failed to claim item. Please try again.';
-    throw { message: errorMessage };
+    throw new Error(errorMessage); 
   }
 };
 
