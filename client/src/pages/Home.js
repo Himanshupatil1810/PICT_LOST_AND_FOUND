@@ -9,6 +9,36 @@ const Home = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   
+  // Function to format date
+  const formatDate = (dateString) => {
+    if (!dateString) return 'Date not available';
+    const date = new Date(dateString);
+    if (isNaN(date.getTime())) return 'Invalid Date';
+    return date.toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric'
+    });
+  };
+  
+  // Function to get the proper image URL
+  const getImageUrl = (image) => {
+    if (!image) return 'https://via.placeholder.com/300x200?text=No+Image';
+    
+    // If image is an object with url property
+    if (typeof image === 'object' && image.url) {
+      return image.url;
+    }
+    
+    // If it's a string and a full URL already, return as is
+    if (typeof image === 'string' && image.startsWith('http')) {
+      return image;
+    }
+    
+    // Otherwise, prepend the server URL
+    return `http://localhost:5000${image}`;
+  };
+  
   useEffect(() => {
     const fetchRecentItems = async () => {
       try {
@@ -229,7 +259,7 @@ const Home = () => {
                   <div key={item._id} className="bg-white rounded-xl shadow-md hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 overflow-hidden">
                     <div className="relative h-48 overflow-hidden">
                       <img 
-                        src={item.imageUrl || 'https://via.placeholder.com/300x200?text=No+Image'} 
+                        src={getImageUrl(item.image)} 
                         alt={item.name}
                         className="w-full h-full object-cover transform hover:scale-110 transition-transform duration-500"
                       />
@@ -242,7 +272,7 @@ const Home = () => {
                       <p className="text-gray-600 text-sm mb-3 line-clamp-2">{item.description}</p>
                       <div className="flex items-center justify-between">
                         <div className="text-sm text-gray-500">
-                          Found: {new Date(item.dateFound).toLocaleDateString()}
+                          Found: {formatDate(item.foundDate)}
                         </div>
                         <Link
                           to={`/items/${item._id}`}
