@@ -133,47 +133,62 @@ const addItem = async (itemData) => {
       throw new Error("addedBy field is required");
     }
 
-    // Convert image file to base64
-    let imageBase64 = null;
+    // Create FormData for file upload
+    const formData = new FormData();
+    
+    // Append item image
     if (itemData.image) {
-      imageBase64 = await new Promise((resolve, reject) => {
-        const reader = new FileReader();
-        reader.readAsDataURL(itemData.image);
-        reader.onload = () => resolve(reader.result);
-        reader.onerror = error => reject(error);
-      });
+      formData.append('image', itemData.image);
+    } else {
+      throw new Error("Image is required");
+    }
+    
+    // Append other item data
+    formData.append('name', itemData.name);
+    formData.append('category', itemData.category);
+    formData.append('description', itemData.description || '');
+    formData.append('location', itemData.location);
+    formData.append('foundDate', itemData.foundDate);
+    formData.append('status', itemData.status || 'available');
+    formData.append('addedBy', itemData.addedBy);
+
+    // Log the FormData contents for debugging
+    for (let pair of formData.entries()) {
+      console.log(pair[0] + ': ' + pair[1]);
     }
 
-    // Create the request data
-    const requestData = {
+    console.log('Sending item data to server:', {
       name: itemData.name,
       category: itemData.category,
-      description: itemData.description || '',
+      description: itemData.description,
       location: itemData.location,
       foundDate: itemData.foundDate,
-      status: itemData.status || 'available',
+      status: itemData.status,
       addedBy: itemData.addedBy,
-      image: imageBase64
-    };
+      image: itemData.image ? 'File object' : 'No image'
+    });
 
-    console.log('Sending item data to server:', requestData);
-
-    const response = await axios.post(`${API_URL}/api/items`, requestData, {
+    const response = await axios.post(`${API_URL}/api/items`, formData, {
       headers: {
-        'Content-Type': 'application/json',
+        'Content-Type': 'multipart/form-data',
         'Authorization': `Bearer ${token}`
       }
     });
 
     return response.data;
   } catch (error) {
-    console.error("Add Item Error:", error.response?.data || error.message);
+    console.error("Add Item Error:", error);
+    console.error("Error Response:", error.response?.data);
+    console.error("Error Status:", error.response?.status);
+    
     if (error.response?.data?.message) {
       throw new Error(error.response.data.message);
     } else if (error.response?.data?.error) {
       throw new Error(error.response.data.error);
+    } else if (error.message) {
+      throw new Error(error.message);
     } else {
-      throw new Error(error.message || 'Server error');
+      throw new Error('Server error occurred while adding item');
     }
   }
 };

@@ -14,15 +14,17 @@ const storage = multer.diskStorage({
     cb(null, uploadDir);
   },
   filename: function (req, file, cb) {
-    cb(
-      null,
-      `${file.fieldname}-${Date.now()}${path.extname(file.originalname)}`
-    );
+    // Add timestamp to filename to make it unique
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+    cb(null, file.fieldname + '-' + uniqueSuffix + path.extname(file.originalname));
   }
 });
 
 // File filter for images only
 const fileFilter = (req, file, cb) => {
+  console.log('Processing file:', file.originalname);
+  console.log('File mimetype:', file.mimetype);
+  
   const filetypes = /jpeg|jpg|png|gif/;
   const extname = filetypes.test(path.extname(file.originalname).toLowerCase());
   const mimetype = filetypes.test(file.mimetype);
@@ -30,7 +32,7 @@ const fileFilter = (req, file, cb) => {
   if (extname && mimetype) {
     return cb(null, true);
   } else {
-    cb('Error: Images only (jpeg, jpg, png, gif)!');
+    cb(new Error('Error: Images only (jpeg, jpg, png, gif)!'));
   }
 };
 

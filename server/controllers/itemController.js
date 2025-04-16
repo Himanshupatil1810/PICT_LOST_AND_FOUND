@@ -78,7 +78,11 @@ const getItem = asyncHandler(async (req, res) => {
 // @access  Private
 const createItem = asyncHandler(async (req, res) => {
   try {
-    if (!req.body.image) {
+    console.log('Received request body:', req.body);
+    console.log('Received file:', req.file);
+
+    if (!req.file) {
+      console.log('No file received in request');
       return res.status(400).json({
         success: false,
         message: 'Please provide an image'
@@ -86,6 +90,7 @@ const createItem = asyncHandler(async (req, res) => {
     }
 
     if (!req.body.addedBy) {
+      console.log('No addedBy field in request');
       return res.status(400).json({
         success: false,
         message: 'Please specify who added the item'
@@ -93,36 +98,67 @@ const createItem = asyncHandler(async (req, res) => {
     }
 
     // Upload image to Cloudinary
-    const result = await cloudinary.uploader.upload(req.body.image, {
-      folder: 'lost_and_found',
-      use_filename: true,
-      unique_filename: true,
-      resource_type: 'auto' // This will automatically detect the file type
-    });
+    try {
+      console.log('Attempting to upload to Cloudinary...');
+      console.log('File path:', req.file.path);
+      console.log('File mimetype:', req.file.mimetype);
+      
+      const result = await cloudinary.uploader.upload(req.file.path, {
+        folder: 'lost_and_found',
+        use_filename: true,
+        unique_filename: true,
+        resource_type: 'auto'
+      });
+      
+      console.log('Cloudinary upload successful:', result);
 
-    // Create item with Cloudinary image data
-    const itemData = {
-      ...req.body,
-      image: {
-        url: result.secure_url,
-        public_id: result.public_id
+      // Create item with Cloudinary image data
+      const itemData = {
+        ...req.body,
+        image: {
+          url: result.secure_url,
+          public_id: result.public_id
+        }
+      };
+
+      // Clean up the uploaded file
+      fs.unlink(req.file.path, (err) => {
+        if (err) console.error('Error deleting temporary file:', err);
+      });
+
+      const item = await Item.create(itemData);
+      console.log('Item created successfully:', item);
+
+      res.status(201).json({
+        success: true,
+        data: item
+      });
+    } catch (cloudinaryError) {
+      console.error('Cloudinary upload error:', cloudinaryError);
+      // Clean up the uploaded file even if Cloudinary upload fails
+      if (req.file && req.file.path) {
+        fs.unlink(req.file.path, (err) => {
+          if (err) console.error('Error deleting temporary file:', err);
+        });
       }
-    };
-
-    // Remove the base64 image data before creating the item
-    delete itemData.image_base64;
-
-    const item = await Item.create(itemData);
-
-    res.status(201).json({
-      success: true,
-      data: item
-    });
+      return res.status(500).json({
+        success: false,
+        message: 'Error uploading image to Cloudinary',
+        error: cloudinaryError.message
+      });
+    }
   } catch (error) {
     console.error('Error creating item:', error);
-    res.status(400).json({
+    // Clean up the uploaded file if it exists
+    if (req.file && req.file.path) {
+      fs.unlink(req.file.path, (err) => {
+        if (err) console.error('Error deleting temporary file:', err);
+      });
+    }
+    res.status(500).json({
       success: false,
-      message: error.message || 'Error creating item'
+      message: error.message || 'Error creating item',
+      error: error.stack
     });
   }
 });
