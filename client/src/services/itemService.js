@@ -56,8 +56,25 @@ const getItemsByCategory = async (category) => {
 const getRecentItems = async (limit = 6) => {
   try {
     const response = await axios.get(`${API_URL}/api/items/recent?limit=${limit}`);
-    return response.data;
+    
+    // Log the response to see its structure
+    console.log('Recent items response:', response.data);
+    
+    // Check if the response has a data property (standard API format)
+    if (response.data && response.data.data) {
+      return response.data.data;
+    } 
+    // If it's just an array, return it directly
+    else if (Array.isArray(response.data)) {
+      return response.data;
+    }
+    // Otherwise, return an empty array
+    else {
+      console.error('Unexpected response format:', response.data);
+      return [];
+    }
   } catch (error) {
+    console.error('Error fetching recent items:', error);
     throw error.response?.data || { message: 'Server error' };
   }
 };

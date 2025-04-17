@@ -229,9 +229,13 @@ const Home = () => {
                   <div key={item._id} className="bg-white rounded-xl shadow-md hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 overflow-hidden">
                     <div className="relative h-48 overflow-hidden">
                       <img 
-                        src={item.imageUrl || 'https://via.placeholder.com/300x200?text=No+Image'} 
+                        src={item.image && item.image.url ? item.image.url : 'https://via.placeholder.com/300x200?text=No+Image'} 
                         alt={item.name}
                         className="w-full h-full object-cover transform hover:scale-110 transition-transform duration-500"
+                        onError={(e) => {
+                          e.target.onerror = null;
+                          e.target.src = 'https://via.placeholder.com/300x200?text=No+Image';
+                        }}
                       />
                       <div className="absolute top-3 right-3 bg-indigo-600 text-white text-xs font-semibold px-3 py-1 rounded-full">
                         {item.status}
@@ -242,7 +246,7 @@ const Home = () => {
                       <p className="text-gray-600 text-sm mb-3 line-clamp-2">{item.description}</p>
                       <div className="flex items-center justify-between">
                         <div className="text-sm text-gray-500">
-                          Found: {new Date(item.dateFound).toLocaleDateString()}
+                          Found: {item.foundDate ? new Date(item.foundDate).toLocaleDateString() : 'Date not available'}
                         </div>
                         <Link
                           to={`/items/${item._id}`}

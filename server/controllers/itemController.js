@@ -20,14 +20,31 @@ const getItems = asyncHandler(async (req, res) => {
 // @route   GET /api/items/recent
 // @access  Public
 const getRecentItems = asyncHandler(async (req, res) => {
-  const items = await Item.find({ status: 'available' })
-    .sort('-createdAt')
-    .limit(8);
-  res.status(200).json({
-    success: true,
-    count: items.length,
-    data: items
-  });
+  try {
+    const limit = parseInt(req.query.limit) || 8;
+    
+    // Find available items, sorted by creation date (newest first)
+    const items = await Item.find({ status: 'available' })
+      .sort('-createdAt')
+      .limit(limit);
+    
+    // Log the items to verify their structure
+    console.log(`Found ${items.length} recent items`);
+    
+    // Return the items in a consistent format
+    res.status(200).json({
+      success: true,
+      count: items.length,
+      data: items
+    });
+  } catch (error) {
+    console.error('Error fetching recent items:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error fetching recent items',
+      error: error.message
+    });
+  }
 });
 
 // @desc    Search items
