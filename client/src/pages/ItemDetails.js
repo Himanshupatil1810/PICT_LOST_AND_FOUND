@@ -7,7 +7,7 @@ import { FaCalendarAlt, FaMapMarkerAlt, FaTag, FaInfoCircle, FaUser, FaTimes } f
 import ClaimForm from '../components/ClaimForm';
 import LoadingSpinner from '../components/LoadingSpinner';
 import { AuthContext } from '../context/AuthContext';
-
+const API_URL = process.env.REACT_APP_API_URL 
 const ItemDetails = () => {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -22,7 +22,7 @@ const ItemDetails = () => {
       try {
         setLoading(true);
         setError(null);
-        const apiUrl = `http://localhost:5000/api/items/${id}`;
+        const apiUrl = `${API_URL}/api/items/${id}`;
         const response = await axios.get(apiUrl);
         
         if (response.data && response.data.data) {
@@ -83,7 +83,7 @@ const ItemDetails = () => {
       };
       
       await axios.put(
-        `http://localhost:5000/api/items/${id}/delivered`,
+        `${API_URL}/api/items/${id}/delivered`,
         updateData,
         {
           headers: {
@@ -129,7 +129,7 @@ const ItemDetails = () => {
     }
     
     // Otherwise, prepend the server URL
-    return `http://localhost:5000${imagePath}`;
+    return `${API_URL}${imagePath}`;
   };
 
   if (loading) {
